@@ -13,7 +13,7 @@ public class KafkaConsumerListener {
     private ScoreService scoreService;
 
     // Dùng random UUID để ép cơ chế Broadcast cho cả 3 Nodes
-    @KafkaListener(topics = "player-actions-v12", groupId = "#{T(java.util.UUID).randomUUID().toString()}")
+    @KafkaListener(topics = "player-actions-v1", groupId = "#{T(java.util.UUID).randomUUID().toString()}")
     public void consumeAction(String message, @Header(KafkaHeaders.OFFSET) long offset) {
 
         // 1. Nếu là lệnh chụp ảnh (Marker)

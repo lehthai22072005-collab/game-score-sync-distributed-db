@@ -25,7 +25,7 @@ public class ScoreController {
     @PostMapping("/scores")
     public String receiveScore(@RequestBody Map<String, Object> payload) {
         // Gửi dữ liệu vào Kafka - Nhớ dùng đúng version topic bạn đang chạy (v3 hoặc v1)
-        kafkaTemplate.send("player-actions-v12", payload.toString());
+        kafkaTemplate.send("player-actions-v1", payload.toString());
 
         System.out.println("🚀 Node nhận dữ liệu và đẩy vào Kafka: " + payload);
         return "Gửi dữ liệu thành công!";

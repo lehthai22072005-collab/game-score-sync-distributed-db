@@ -20,7 +20,7 @@ public class SnapshotScheduler {
         String port = System.getProperty("server.port", "8081");
         if ("8081".equals(port)) {
             System.out.println("⏱️ [AUTO 10s] Master Node đang phát lệnh MARKER (Chandy-Lamport)...");
-            kafkaTemplate.send("player-actions-v12", "{\"actionType\":\"MARKER\"}");
+            kafkaTemplate.send("player-actions-v1", "{\"actionType\":\"MARKER\"}");
         }
     }
 }
