@@ -81,24 +81,33 @@
                 }, 5000);
             }
 
-            // In điểm
+            // IN ĐIỂM RA GIAO DIỆN
             let html = "";
             for (const [player, score] of Object.entries(scores)) {
                 html += `<li>${player}: ${score} pts</li>`;
             }
-            document.getElementById('score-list').innerHTML = html || "<li style='color: white;'>Chưa có dữ liệu</li>";
+
+            document.getElementById('score-list').innerHTML =
+                html || "<li style='color: white;'>Chưa có dữ liệu</li>";
+
             document.getElementById('score-list').style.color = "#2ecc71";
 
         } catch (e) {
-            // KHI BỊ MẤT KẾT NỐI (CRASH)
+            // KHI BỊ MẤT KẾT NỐI
             if (!isCrashed) {
                 isCrashed = true;
                 isRecovering = false;
 
                 const banner = document.getElementById('status-banner');
                 banner.className = 'status-banner status-crashed';
-                // Hiện nút bấm thủ công
-                banner.innerHTML = `⚠️ MÁY CHỦ SẬP! <button onclick="startRecoveryTimer()" style="margin-left: 10px; padding: 4px 8px; background: #f1c40f; color: black; border: none; font-weight: bold; cursor: pointer; border-radius: 4px;">⏳ Bấm vào đây khi bật lại máy</button>`;
+
+                banner.innerHTML = `
+                    ⚠️ MÁY CHỦ SẬP!
+                    <button onclick="startRecoveryTimer()"
+                        style="margin-left: 10px; padding: 4px 8px; background: #f1c40f; color: black; border: none; font-weight: bold; cursor: pointer; border-radius: 4px;">
+                        ⏳ Bấm vào đây khi bật lại máy
+                    </button>
+                `;
             }
 
             document.getElementById('score-list').innerHTML = "<li>OFFLINE</li>";
@@ -110,6 +119,7 @@
         if (!isRecovering && isCrashed) {
             isRecovering = true;
             recoveryStartTime = Date.now();
+
             const banner = document.getElementById('status-banner');
 
             stopwatchInterval = setInterval(() => {
@@ -123,17 +133,60 @@
         const playerId = document.getElementById('inputPlayer').value || "Unknown";
         const actionType = document.getElementById('inputAction').value;
         const points = parseInt(document.getElementById('inputPoints').value) || 0;
-        const payload = { playerID: playerId, actionType: actionType, points: points };
+
+        const payload = {
+            playerID: playerId,
+            actionType: actionType,
+            points: points
+        };
 
         try {
-            await fetch('/api/scores', {
+            const response = await fetch('/api/scores', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            updateScores();
+
+            if (response.ok) {
+                // Chờ Kafka Consumer xử lý message một chút
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Cập nhật điểm mới lên giao diện
+                await updateScores();
+
+                // Hiện thông báo thành công ngay trên banner, không dùng alert
+                const banner = document.getElementById('status-banner');
+                banner.className = 'status-banner status-recovered';
+                banner.innerHTML = "✅ Gửi dữ liệu thành công!";
+
+                // Sau 3 giây trả banner về trạng thái Online
+                setTimeout(() => {
+                    if (!isCrashed) {
+                        banner.className = 'status-banner';
+                        banner.innerHTML = '🟢 Hệ thống Online';
+                    }
+                }, 3000);
+
+            } else {
+                const banner = document.getElementById('status-banner');
+                banner.className = 'status-banner status-crashed';
+                banner.innerHTML = "⚠️ Gửi dữ liệu thất bại! Server trả lỗi.";
+
+                setTimeout(() => {
+                    if (!isCrashed) {
+                        banner.className = 'status-banner';
+                        banner.innerHTML = '🟢 Hệ thống Online';
+                    }
+                }, 3000);
+            }
+
         } catch (error) {
-            alert("⚠️ Không thể gửi dữ liệu! Máy chủ đã sập.");
+            const banner = document.getElementById('status-banner');
+            banner.className = 'status-banner status-crashed';
+            banner.innerHTML = "⚠️ Không thể gửi dữ liệu! Máy chủ đã sập.";
+
+            document.getElementById('score-list').innerHTML = "<li>OFFLINE</li>";
+            document.getElementById('score-list').style.color = "#e74c3c";
         }
     }
 
